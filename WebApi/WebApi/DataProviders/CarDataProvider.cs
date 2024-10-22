@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
-using Polly;
 using System.Net;
 using System.Text.Json;
+using WebApi.Configurations;
 using WebApi.Domain.Dtos;
 using WebApi.Domain.Providers;
 
@@ -15,11 +15,11 @@ namespace WebApi.DataProviders
 
         public CarDataProvider(IMemoryCache cache, 
                                IConfiguration configuration,
-                               HttpClient httpClient)
+                               IHttpClientFactory httpClientFactory)
         {
             _cache = cache;
-            _httpClient = httpClient;
             _configuration = configuration;
+            _httpClient = httpClientFactory.CreateClient(HttpClientServiceConfig.HTTP_CLIENT_DEFAULT);
         }
 
         public async Task<List<BrandDto>> GetCarsBrandsData()
@@ -31,31 +31,12 @@ namespace WebApi.DataProviders
         public async Task<CarModelDto> GetCarsModelsDataByBrandId(string brandId)
         {
             var url = _configuration.GetRequiredSection("Http")["Cars:Urls:Models"]
-                        .Replace("{brand_Id}", brandId);
+                                    .Replace("{brand_Id}", brandId);
 
             return await ExecuteHttpGetRequest<CarModelDto>(url);
         }
 
         private async Task<T> ExecuteHttpGetRequest<T>(string url)
-        {
-            var retryPolicy = Policy.Handle<HttpRequestException>()
-                                    .RetryAsync(3,
-                                        (exception, retryCount) => Console.WriteLine($"Fail on try {retryCount}. Trying again..."));
-
-            var circuitBreakerPolicy = Policy.Handle<HttpRequestException>()
-                                              .CircuitBreakerAsync(3, TimeSpan.FromSeconds(30),
-                                                  onBreak: (exception, breakDelay) => Console.WriteLine($"Circuit Open! Awaiting {breakDelay.TotalSeconds} seconds to try again."),
-                                                  onReset: () => Console.WriteLine("Circuit closed! The operations came back to normal."),
-                                                  onHalfOpen: () => Console.WriteLine("Circuit half-open. Trying one new operation..."));
-
-            var finalPolicy = Policy.WrapAsync(retryPolicy, circuitBreakerPolicy);
-
-            var json = await finalPolicy.ExecuteAsync(async () => await GetFromCacheOrExecuteRequest(url));
-
-            return JsonSerializer.Deserialize<T>(json);
-        }
-
-        private async Task<string> GetFromCacheOrExecuteRequest(string url)
         {
             var cacheExpiresIn = _configuration.GetRequiredSection("Http")["Cars:CachePeriodInMinutes"];
             var cacheSize = _configuration.GetRequiredSection("Http")["Cars:CacheSizeInMb"];
@@ -70,7 +51,9 @@ namespace WebApi.DataProviders
                 if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotFound)
                     throw new HttpRequestException();
 
-                return await response.Content.ReadAsStringAsync();
+                var json = await response.Content.ReadAsStringAsync();
+
+                return JsonSerializer.Deserialize<T>(json);
             });
 
             return await cachedResponse;

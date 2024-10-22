@@ -12,8 +12,8 @@ namespace WebApi
             builder.Services.AddControllers();
 
             SwaggerServiceConfig.Configure(builder.Services);
-            HttpClientServiceConfig.Configure(builder.Services);
             MemoryCacheServiceConfig.Configure(builder.Services);
+            HttpClientServiceConfig.Configure(builder.Services);
             DependencyInjectionServiceConfig.Configure(builder.Services);
             MetricsServiceConfig.Configure(builder.Services);
 

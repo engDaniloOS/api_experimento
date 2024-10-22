@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using WebApi.Domain.Dtos;
 using WebApi.Domain.UseCases;
 
 namespace WebApi.Entrypoints.Controllers
@@ -16,7 +15,7 @@ namespace WebApi.Entrypoints.Controllers
         [Route("brands")]
         public async Task<IActionResult> GetAllCarsBrands()
         {
-            CarBrandDto brandsDto = await _service.GetCarsBrands();
+            var brandsDto = await _service.GetCarsBrands();
 
             if (brandsDto.HasError)
                 return BadRequest(brandsDto.ErrorMessage);
@@ -28,7 +27,7 @@ namespace WebApi.Entrypoints.Controllers
         [Route("brands/{brand_id}")]
         public async Task<IActionResult> GetCarById([FromRoute(Name = "brand_id")] int brandId)
         {
-            CarModelDto modelsDto = await _service.GetCarsModelsByBrandId(brandId);
+            var modelsDto = await _service.GetCarsModelsByBrandId(brandId);
 
             if(modelsDto.HasError)
                 return BadRequest(modelsDto.ErrorMessage);

@@ -9,7 +9,6 @@ namespace WebApi.Configurations
         public RequestLatencyMiddleware(RequestDelegate requestDelegate)
             => _requestDelegate = requestDelegate;
 
-
         public async Task InvokeAsync(HttpContext context)
         {
             var stopwatch = Stopwatch.StartNew();
