@@ -1,4 +1,5 @@
 using WebApi.Configurations;
+using Prometheus;
 
 namespace WebApi
 {
@@ -14,6 +15,7 @@ namespace WebApi
             HttpClientServiceConfig.Configure(builder.Services);
             MemoryCacheServiceConfig.Configure(builder.Services);
             DependencyInjectionServiceConfig.Configure(builder.Services);
+            MetricsServiceConfig.Configure(builder.Services);
 
             var app = builder.Build();
 
@@ -23,9 +25,18 @@ namespace WebApi
                 app.UseSwaggerUI();
             }
 
+            //from prometheus config
+            app.UseHttpMetrics();
+
             app.UseAuthorization();
 
             app.MapControllers();
+            
+            //from prometheus config
+            app.MapMetrics();
+
+            //from health check
+            app.MapHealthChecks("/health");
 
             app.Run();
         }
