@@ -38,6 +38,9 @@ namespace WebApi
             //from health check
             app.MapHealthChecks("/health");
 
+            //latency
+            app.UseMiddleware<RequestLatencyMiddleware>();
+
             app.Run();
         }
     }
