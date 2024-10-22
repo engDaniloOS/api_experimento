@@ -12,6 +12,7 @@ namespace WebApi
 
             SwaggerServiceConfig.Configure(builder.Services);
             HttpClientServiceConfig.Configure(builder.Services);
+            MemoryCacheServiceConfig.Configure(builder.Services);
             DependencyInjectionServiceConfig.Configure(builder.Services);
 
             var app = builder.Build();
