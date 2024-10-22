@@ -4,6 +4,5 @@
     {
         public static void Configure(IServiceCollection services)
             => services.AddHealthChecks();
-
     }
 }
