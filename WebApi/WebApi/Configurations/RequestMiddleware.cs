@@ -8,6 +8,7 @@ namespace WebApi.Configurations
         private readonly ILogger<RequestMiddleware> _logger;
         private readonly RequestDelegate _requestDelegate;
 
+
         public RequestMiddleware(RequestDelegate requestDelegate,
                                         ILogger<RequestMiddleware> logger)
         {
@@ -25,11 +26,13 @@ namespace WebApi.Configurations
                 correlationId = Guid.NewGuid().ToString();
 
             using (LogContext.PushProperty("correlation_id", correlationId))
+            {
                 await _requestDelegate(context);
 
-            stopwatch.Stop();
+                stopwatch.Stop();
 
-            _logger.LogInformation($"Latency: {stopwatch.Elapsed.TotalMilliseconds} to {context.Request.Path}");
+                _logger.LogInformation($"Latency: {stopwatch.Elapsed.TotalMilliseconds} to {context.Request.Path}");
+            }
         }
     }
 }
