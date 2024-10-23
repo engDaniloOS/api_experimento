@@ -6,11 +6,15 @@ namespace WebApi.DataProviders.Commons
     {
         private readonly IMemoryCache _cache;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<HttpCacheProvider> _logger;
 
-        public HttpCacheProvider(IMemoryCache cache, IConfiguration configuration)
+        public HttpCacheProvider(IMemoryCache cache,
+                                 IConfiguration configuration,
+                                 ILogger<HttpCacheProvider> logger)
         {
             _cache = cache;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<T> GetCacheOrExecuteFunction<T>(string url, Func<Task<T>> fetchFunction)
@@ -23,6 +27,7 @@ namespace WebApi.DataProviders.Commons
                 fun.AbsoluteExpiration = DateTime.Now.AddMinutes(long.Parse(cacheExpiresIn));
                 fun.Size = long.Parse(cacheSize);
 
+                _logger.LogInformation("Cache miss. Executing function...");
                 return await fetchFunction();
             });
 
