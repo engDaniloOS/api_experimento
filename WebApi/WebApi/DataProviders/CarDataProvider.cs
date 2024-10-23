@@ -1,7 +1,6 @@
-﻿using Microsoft.Extensions.Caching.Memory;
-using System.Net;
-using System.Text.Json;
+﻿using System.Text.Json;
 using WebApi.Configurations;
+using WebApi.DataProviders.Commons;
 using WebApi.Domain.Dtos;
 using WebApi.Domain.Providers;
 
@@ -10,10 +9,10 @@ namespace WebApi.DataProviders
     public class CarDataProvider : ICarDataProvider
     {
         private readonly HttpClient _httpClient;
-        private readonly IMemoryCache _cache;
+        private readonly HttpCacheProvider _cache;
         private readonly IConfiguration _configuration;
 
-        public CarDataProvider(IMemoryCache cache, 
+        public CarDataProvider(HttpCacheProvider cache, 
                                IConfiguration configuration,
                                IHttpClientFactory httpClientFactory)
         {
@@ -25,7 +24,7 @@ namespace WebApi.DataProviders
         public async Task<List<BrandDto>> GetCarsBrandsData()
         {
             var url = _configuration.GetRequiredSection("Http")["Cars:Urls:Brands"];
-            return await ExecuteHttpGetRequest<List<BrandDto>>(url);
+            return await FetchAndDeserialize<List<BrandDto>>(url);
         }
 
         public async Task<CarModelDto> GetCarsModelsDataByBrandId(string brandId)
@@ -33,19 +32,13 @@ namespace WebApi.DataProviders
             var url = _configuration.GetRequiredSection("Http")["Cars:Urls:Models"]
                                     .Replace("{brand_Id}", brandId);
 
-            return await ExecuteHttpGetRequest<CarModelDto>(url);
+            return await FetchAndDeserialize<CarModelDto>(url);
         }
 
-        private async Task<T> ExecuteHttpGetRequest<T>(string url)
+        private async Task<T> FetchAndDeserialize<T>(string url)
         {
-            var cacheExpiresIn = _configuration.GetRequiredSection("Http")["Cars:CachePeriodInMinutes"];
-            var cacheSize = _configuration.GetRequiredSection("Http")["Cars:CacheSizeInMb"];
-
-            var cachedResponse = _cache.GetOrCreateAsync(url, async fun =>
+            var fun = async () =>
             {
-                fun.AbsoluteExpiration = DateTime.Now.AddMinutes(long.Parse(cacheExpiresIn));
-                fun.Size = long.Parse(cacheSize);
-
                 var response = await _httpClient.GetAsync(url);
 
                 response.EnsureSuccessStatusCode();
@@ -53,9 +46,9 @@ namespace WebApi.DataProviders
                 var json = await response.Content.ReadAsStringAsync();
 
                 return JsonSerializer.Deserialize<T>(json);
-            });
+            };
 
-            return await cachedResponse;
+            return await _cache.GetCacheOrExecuteFunction(url, fun);
         }
     }
 }
