@@ -41,15 +41,14 @@ namespace WebApi.DataProviders
             var cacheExpiresIn = _configuration.GetRequiredSection("Http")["Cars:CachePeriodInMinutes"];
             var cacheSize = _configuration.GetRequiredSection("Http")["Cars:CacheSizeInMb"];
 
-            var cachedResponse = _cache.GetOrCreate(url, async fun =>
+            var cachedResponse = _cache.GetOrCreateAsync(url, async fun =>
             {
                 fun.AbsoluteExpiration = DateTime.Now.AddMinutes(long.Parse(cacheExpiresIn));
                 fun.Size = long.Parse(cacheSize);
 
                 var response = await _httpClient.GetAsync(url);
 
-                if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotFound)
-                    throw new HttpRequestException();
+                response.EnsureSuccessStatusCode();
 
                 var json = await response.Content.ReadAsStringAsync();
 

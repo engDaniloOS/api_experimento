@@ -1,5 +1,6 @@
 using WebApi.Configurations;
 using Prometheus;
+using Serilog;
 
 namespace WebApi
 {
@@ -16,6 +17,9 @@ namespace WebApi
             HttpClientServiceConfig.Configure(builder.Services);
             DependencyInjectionServiceConfig.Configure(builder.Services);
             MetricsServiceConfig.Configure(builder.Services);
+            LogServiceConfig.Configure();
+
+            builder.Host.UseSerilog();
 
             var app = builder.Build();
 
@@ -39,7 +43,7 @@ namespace WebApi
             app.MapHealthChecks("/health");
 
             //latency
-            app.UseMiddleware<RequestLatencyMiddleware>();
+            app.UseMiddleware<RequestMiddleware>();
 
             app.Run();
         }
