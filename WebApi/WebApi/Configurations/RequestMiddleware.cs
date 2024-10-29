@@ -1,37 +1,24 @@
 ﻿using Serilog.Context;
 using System.Diagnostics;
+using WebApi.Utils;
 
 namespace WebApi.Configurations
 {
-    public class RequestMiddleware
+    public class RequestMiddleware(RequestDelegate requestDelegate,
+                                   ILogger<RequestMiddleware> logger)
     {
-        private readonly ILogger<RequestMiddleware> _logger;
-        private readonly RequestDelegate _requestDelegate;
-
-
-        public RequestMiddleware(RequestDelegate requestDelegate,
-                                        ILogger<RequestMiddleware> logger)
-        {
-            _requestDelegate = requestDelegate;
-            _logger = logger;
-        }
-
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext httpContext)
         {
             var stopwatch = Stopwatch.StartNew();
-
-            var correlationId = context.Request.Headers["CorrelationId"].FirstOrDefault();
-
-            if (string.IsNullOrWhiteSpace(correlationId))
-                correlationId = Guid.NewGuid().ToString();
+            var correlationId = CorrelationIdUtils.Get(httpContext);
 
             using (LogContext.PushProperty("correlation_id", correlationId))
             {
-                await _requestDelegate(context);
+                await requestDelegate(httpContext);
 
                 stopwatch.Stop();
 
-                _logger.LogInformation($"Latency: {stopwatch.Elapsed.TotalMilliseconds} to {context.Request.Path}");
+                logger.LogInformation($"Latency: {stopwatch.Elapsed.TotalMilliseconds} to {httpContext.Request.Path}");
             }
         }
     }

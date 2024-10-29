@@ -15,5 +15,5 @@ O objetivo da aplicação é testar algumas funcionalidades de observabilidade, 
 
 ## Requisitos
 ```sh
-.NET 6
+.NET 8
 ```

@@ -18,6 +18,7 @@ namespace WebApi
             DependencyInjectionServiceConfig.Configure(builder.Services);
             MetricsServiceConfig.Configure(builder.Services);
             LogServiceConfig.Configure();
+            ExceptionHandlerConfig.Configure(builder.Services);
 
             builder.Host.UseSerilog();
 
@@ -28,6 +29,8 @@ namespace WebApi
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseExceptionHandler();
 
             //from prometheus config
             app.UseHttpMetrics();
