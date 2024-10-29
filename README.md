@@ -1,4 +1,4 @@
-# Api para experimentar algumas bibliotecas em .Net 6 (C#)
+# Api para experimentar algumas bibliotecas em .Net 8 (C#)
 O objetivo da aplicação é testar algumas funcionalidades de observabilidade, resiliência e desempenho.
 
 ## Features 🛠
